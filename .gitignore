@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Credentials & Runtime Data
+settings.json
+hits.csv
+hits.txt
+*.xml
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+*.swp
