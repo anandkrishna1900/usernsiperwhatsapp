@@ -1,190 +1,179 @@
-# 📱 WhatsApp Username Sniper
+# WhatsApp Username Sniper
 
-Automatically checks whether WhatsApp usernames are available by typing them
-into the username field on your phone and reading the result via ADB.
-No root, no patches, no Frida — just a USB cable.
+A high-performance, automated WhatsApp username availability checker powered by **ADB** (Android Debug Bridge) and UI inspection. 
 
-<img width="979" height="512" alt="image" src="https://github.com/user-attachments/assets/97044d15-5f14-407d-a930-8c8cf65a4b82" />
+Operates directly on your physical Android device over a standard USB or wireless ADB connection. **No root, no modified APKs, and no Frida required.**
 
 ---
 
-<img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
+## Highlights & Features
 
-## How it works
-
-WhatsApp introduced usernames in 2026. Short, clean names get claimed fast.  
-This tool connects to your phone over ADB, navigates to the username edit screen, types candidates one by one, and reads the UI response — logging every available name to `hits.txt` instantly.
-
----
-## SHOWCASE
-
-[![Whatsapp Username Sniper Showcase](https://img.youtube.com/vi/Kr5I5f5yCvI/0.jpg)](https://www.youtube.com/watch?v=Kr5I5f5yCvI)
-
----
-
-## Requirements
-
-| What | Details |
-|------|---------|
-| Python | 3.9 or newer — **no extra packages needed** |
-| ADB | [Platform Tools installer](https://github.com/cli-stuff/platform-tools-installer-windows) — must be on PATH |
-| Android phone | USB debugging enabled, plugged in via USB |
-| WhatsApp | Installed and logged in |
-
-Root is not required.
+- **Zero Third-Party Dependencies** — Built entirely with the Python standard library. No `pip install` required.
+- **High-Throughput Persistent Shell** — Piped interactive ADB shell eliminates per-command process overhead for maximum speed.
+- **6 Versatile Generation Modes** — Random combo generator, custom wordlists, English & German dictionary generators, and exhaustive bruteforce.
+- **Smart Auto-Calibration** — Automatically locates text field coordinates via UIAutomator dump with manual fallback support.
+- **Real-Time Terminal Dashboard** — Live ANSI status monitor displaying hits, total checked, scan speed (req/s), elapsed time, and ETA.
+- **Automated Anti-Throttle Protection** — Configurable work/rest intervals (e.g., 15m work / 5m rest) with live countdown timers to protect against rate limits.
+- **Multi-Channel Discord Notifications** — Route hits to dedicated Discord webhook channels based on username length or mode.
+- **Dual Logging & State Persistence** — Automatically records all hits to both `hits.txt` and `hits.csv` alongside automatic checkpoint saving for resuming wordlist and bruteforce runs.
+- **Automatic Deduplication** — Tracks checked candidates in `checked.txt` so names are never redundantly queried across runs.
+- **Audio Alerts** — Immediate system beep notification whenever an available username is discovered.
 
 ---
 
-## Installation
+## How It Works
 
-**1. Install Python**  
-[python.org](https://python.org) → check *"Add Python to PATH"* during setup.
+WhatsApp verifies username availability in real time directly within the application's profile settings. 
 
-**2. Get ADB**  
-Download Android Platform Tools, extract, add to PATH. Verify:
 ```
-adb version
+┌─────────────────┐       ADB Shell Pipe        ┌────────────────────────┐
+│  Python Sniper  │  ─────────────────────────► │     Android Device     │
+│   (PC Client)   │  ◄───────────────────────── │  WhatsApp Profile Edit │
+└────────┬────────┘      UIAutomator State      └────────────────────────┘
+         │
+         ├───► Available Hit?  ───►  hits.txt & hits.csv
+         ├───► Audio Alert     ───►  System Beep
+         └───► Discord Hook    ───►  Channel Embed Notification
 ```
 
-**3. Enable USB debugging on your phone**  
-Settings → About phone → tap Build number 7× → Developer options → USB debugging → Allow.
+1. Connects to your Android device via an optimized ADB connection.
+2. Injects candidate usernames into the native WhatsApp username field.
+3. Parses the UIAutomator hierarchy to read the instantaneous validation status.
+4. Categorizes the username as available, taken, or throttled.
+5. Logs hits, notifies configured webhooks, and proceeds to the next candidate.
 
-**4. Connect and authorize**
-```
+---
+
+## Prerequisites
+
+| Requirement | Details |
+| :--- | :--- |
+| **Python** | Version 3.9 or newer |
+| **ADB** | Android Platform Tools installed and accessible in system `PATH` |
+| **Android Phone** | USB Debugging enabled, connected via USB cable (or wireless ADB) |
+| **WhatsApp** | Official WhatsApp installed and logged into an active account |
+
+> [!NOTE]
+> Root access is **not required**. The tool interacts strictly through standard Android Accessibility and ADB input mechanisms.
+
+---
+
+## Installation & Setup
+
+### 1. Install Python
+Download and install Python 3.9+ from [python.org](https://python.org). Ensure the option **"Add Python to PATH"** is checked during installation.
+
+### 2. Set Up Android Debug Bridge (ADB)
+1. Download the [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools).
+2. Extract the folder to a permanent location (e.g., `C:\platform-tools` or `/usr/local/bin`).
+3. Add the extracted directory to your system's `PATH` environment variable.
+4. Verify installation in your terminal:
+   ```bash
+   adb version
+   ```
+
+### 3. Enable USB Debugging on Your Device
+1. Open **Settings** → **About Phone**.
+2. Tap **Build Number** 7 times until Developer Options are enabled.
+3. Navigate to **Settings** → **Developer Options**.
+4. Enable **USB Debugging** (and **USB Debugging (Security settings)** if on MIUI/HyperOS/ColorOS).
+
+### 4. Authorize Device
+Connect your phone via USB and run:
+```bash
 adb devices
 ```
-Must show `device` (not `unauthorized`).
+If prompted on your phone screen, tap **"Always allow from this computer"** and select **Allow**. The terminal output must report the device as `device` (not `unauthorized` or `offline`).
 
 ---
 
-## Usage
+## Quick Start
 
-**1.** Open WhatsApp on your phone:  
-`Settings → Profile → Username → ✎ (edit icon)`
+1. **Navigate to the Username Screen on Your Device:**
+   ```
+   WhatsApp → Settings → Profile → Username → Edit (pencil icon)
+   ```
+   *(Ensure the input field is visible on the screen before launching the script).*
 
-**2.** Run the script:
-```
-python sniper.py
-```
+2. **Run the Sniper:**
+   ```bash
+   python sniper.py
+   ```
 
-**3.** Pick a mode:
+3. **Select Mode & Parameters:**
+   Select your preferred generation mode and configure delay (recommended: `0.5s`).
 
-```
-  1  →  Combo      ∞ random combinations
-  2  →  Wordlist   your own list (wordlist.txt)
-  3  →  Settings   webhooks & config
-  4  →  EN Dict    random common English words
-  5  →  DE Dict    random common German words
-```
-
-**4.** Set a delay (0.5 s recommended — going lower risks throttling).
-
-**5.** Follow the calibration step — the script auto-detects the text field.  
-If detection fails it will ask for the X/Y coordinates once.
+4. **Calibrate:**
+   The script will auto-detect the coordinate box of the input field. If auto-detection fails, manually input the X/Y coordinates as prompted.
 
 ---
 
-## Modes
+## Operation Modes
 
-### 1 — Combo
-Generates an infinite stream of truly random strings.  
-Choose length (3–8) and charset:
-
-| # | Charset | Example |
-|---|---------|---------|
-| 1 | Letters  `a-z` | `kfmq` |
-| 2 | Digits   `0-9` | `3917` |
-| 3 | Mixed    `a-z + 0-9` | `b4xz` |
-
-### 2 — Wordlist
-Reads `wordlist.txt` (or any file you point it at) line by line.  
-You can resume from a specific line if you stopped mid-run.  
-Bundled: **1,000 German words**, 5–8 characters.
-
-### 3 — Settings
-Configure Discord webhooks — one per mode.  
-Changes are saved to `settings.json` and persist across runs.
-
-### 4 — EN Dict  *(auto-downloaded)*
-Uses Google's **top ~9,900 most common English words** (no swear words).  
-Downloaded on first use, cached as `dict_en.txt`.  
-Words are shuffled before every full pass — no repeats until the whole list is exhausted.
-
-### 5 — DE Dict  *(auto-downloaded)*
-Uses the **top 50,000 most common German words** by real-world frequency.  
-Downloaded on first use, cached as `dict_de.txt`.  
-Same shuffle-then-iterate logic as EN Dict.
+| # | Mode | Description | Configuration Options |
+| :-: | :--- | :--- | :--- |
+| **1** | **Combo** | Generates an infinite stream of random combinations | Length (`3`–`8`), Charset (Letters `a-z`, Digits `0-9`, Mixed `a-z0-9`, or Custom) |
+| **2** | **Wordlist** | Iterates through a custom wordlist file line by line | File path, starting line / resume progress, min/max length filtering |
+| **3** | **Settings** | Configuration panel for webhooks and timers | Up to 10 Discord webhook slots & custom work/rest break schedules |
+| **4** | **EN Dict** | Top ~10,000 most common English words (auto-cached) | Min/max length filtering, automatic shuffle per complete pass |
+| **5** | **DE Dict** | Top 50,000 most common German words (auto-cached) | Min/max length filtering, frequency-based word dictionary |
+| **6** | **Bruteforce**| Exhaustive search through every combination systematically | Custom charset, min/max length, automatic checkpoint save/resume |
 
 ---
 
-## Discord Webhooks
+## Discord Webhook Integration
 
-Open **mode 3 → Settings** to configure up to 9 webhook slots:
+Configure webhooks in **Mode 3 (Settings)** to receive instant rich notifications when an available username is claimed or discovered.
 
-| Slot | Fires when |
-|------|-----------|
-| 3-char … 8-char | Combo mode with that length |
-| Wordlist | Mode 2 |
-| EN Dict | Mode 4 |
-| DE Dict | Mode 5 |
+### Webhook Routing Slots:
+- **Slots 1–6 (`3-char` to `8-char`):** Dispatches alerts for Combo mode results matched by character length.
+- **Slot 7 (`Wordlist`):** Dispatches alerts triggered in Mode 2.
+- **Slot 8 (`EN Dict`):** Dispatches alerts triggered in Mode 4.
+- **Slot 9 (`DE Dict`):** Dispatches alerts triggered in Mode 5.
+- **Slot 10 (`Bruteforce`):** Dispatches alerts triggered in Mode 6.
 
-Each slot posts to a different Discord channel.  
-After saving a URL you can send a test message immediately.
-
----
-
-## Auto-Pause
-
-Every **15 minutes** the sniper automatically pauses for **5 minutes**.  
-A live MM:SS countdown is shown. This reduces the chance of WhatsApp throttling the field.  
-Ctrl+C during a pause exits cleanly.
+All webhook endpoints are validated with an interactive test function upon configuration and stored persistently in `settings.json`.
 
 ---
 
-## Output
+## Anti-Throttle Protection (Auto-Pause)
 
-While running, names are color-coded:
+To avoid temporary rate-limiting from WhatsApp servers, the built-in scheduler pauses activity periodically:
 
-| Color | Meaning |
-|-------|---------|
-| Green  | Available — saved to `hits.txt` + webhook fired |
-| Red    | Taken |
-| Yellow | Timeout / no response |
-
-A pinned stats bar shows hits, checked count, speed (checks/s), and elapsed time.
+- **Default Work Interval:** 15 minutes of active checking.
+- **Default Rest Interval:** 5 minutes cooldown period.
+- **Live Display:** Displays an active `MM:SS` countdown timer during breaks.
+- **Customizable:** Adjust interval durations in **Mode 3 → Break config** (`b`).
 
 ---
 
-## Files
+## Project Structure & File Reference
 
 | File | Description |
-|------|-------------|
-| `sniper.py` | Main script — only file you need to run |
-| `wordlist.txt` | Word list for mode 2 (1,000 German words bundled) |
-| `dict_en.txt` | Cached English dictionary (auto-created on first EN Dict run) |
-| `dict_de.txt` | Cached German dictionary (auto-created on first DE Dict run) |
-| `hits.txt` | Available names found — appended, never overwritten |
-| `settings.json` | Saved webhook URLs — created automatically |
-| `webhook_errors.log` | Webhook delivery errors (created if a POST fails) |
+| :--- | :--- |
+| `sniper.py` | Main application script containing the ADB engine, UI reader, and CLI interface. |
+| `hits.txt` | Human-readable log of all available usernames discovered, formatted with timestamps. |
+| `hits.csv` | Structured CSV archive containing timestamp, username, and discovery mode. |
+| `checked.txt` | Persistent cache of all tested usernames to prevent duplicate requests across runs. |
+| `settings.json` | Local configuration store for webhook endpoints and break timers. |
+| `wordlist.txt` | Default local wordlist file (bundled with 1,000 curated words). |
+| `wordlist_progress.json` | Automatic bookmark tracking last processed line for wordlist runs. |
+| `bf_checkpoint.json` | Saved state index allowing seamless resumption of bruteforce sessions. |
+| `dict_en.txt` / `dict_de.txt` | Cached local dictionaries downloaded on first initialization. |
+| `webhook_errors.log` | Diagnostic log recording any failed HTTP webhook deliveries. |
 
 ---
 
-## Notes
+## Tips & Best Practices
 
-- Keep the phone screen on and unlocked while scanning.
-- Combo mode is truly random — every check is an independent random pick.
-- Dict modes cover the full list before repeating (shuffle → iterate → reshuffle).
-- `hits.txt` accumulates across runs — previous results are never lost.
-- If WhatsApp updates and breaks detection, try increasing the delay to 1 s+.
+- **Screen Awake:** Keep your phone screen awake while scanning (enable *"Stay awake while charging"* in Developer Options).
+- **Recommended Delay:** A delay of `0.5s` offers an optimal balance between throughput and rate-limit safety.
+- **Resuming Worklists:** If you terminate a wordlist or bruteforce scan, relaunching the mode will automatically offer to resume from your exact progress checkpoint.
+- **Network Stability:** Ensure a stable internet connection on the mobile device so WhatsApp can return username availability checks without timeouts.
 
 ---
 
 ## Disclaimer
 
-Using this tool may violate WhatsApp's Terms of Service.  
-Your account could be restricted or banned.  
-Use at your own risk — the author takes no responsibility for any consequences.
-
----
-
-*WA Sniper*
+> [!WARNING]
+> This project is developed strictly for educational and security research purposes. Automating interactions with WhatsApp may violate their [Terms of Service](https://www.whatsapp.com/legal/terms-of-service). The authors and contributors assume no liability for account restrictions, suspensions, or misuse of this software. Use responsibly.
